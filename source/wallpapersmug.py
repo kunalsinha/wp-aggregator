@@ -1,57 +1,60 @@
-import requests
-import random
-from bs4 import BeautifulSoup, SoupStrainer
 import os
+import requests
+from bs4 import BeautifulSoup, SoupStrainer
+import random
 import logging
 from utils import download_img
 
-BASE_URL = 'http://wallpaperswide.com/'
-SEARCH_URL = 'http://wallpaperswide.com/search'
-PAGE_URL = 'http://wallpaperswide.com/search/page/'
-DOWNLOAD_URL = 'http://wallpaperswide.com/download/'
+BASE_URL = 'http://wallpapersmug.com/'
+SEARCH_URL = 'https://wallpapersmug.com/w/wallpaper'
+PAGE_URL = 'https://wallpapersmug.com/w/wallpaper/latest/page/'
+DOWNLOAD_URL = 'https://wallpapersmug.com/w/download/'
 
 
-def _extract_num_of_search_pages(keyword=None) -> int:
+def _extract_num_of_search_pages(keyword):
     if not keyword:
         keyword = ''
-    params = {'q': keyword}
-    resp = requests.get(SEARCH_URL, params)
+    params = {'search': keyword}
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    resp = requests.get(SEARCH_URL, params=params, headers=headers)
     if resp.status_code != 200:
         raise Exception(f'Response info: {resp.status_code}')
-    soup_strainer = SoupStrainer('div', class_='pagination')
+    soup_strainer = SoupStrainer('nav', class_='pagy-nav pagination')
     soup = BeautifulSoup(resp.text, 'html.parser', parse_only=soup_strainer)
-    page_links = soup.find_all('a')
-    if page_links:
-        num_pages = int(page_links[-2].string)
-    else:
-        selected = soup.find(class_='selected')
-        if selected:
-            num_pages = 1
-        else:
-            num_pages = 0
-    return num_pages
+    try:
+        return int(soup.nav.find_all('span')[-2].string)
+    except Exception:
+        return 0
 
 
 def _extract_image_urls(page_num: int, keyword: str) -> list[str]:
     url = os.path.join(PAGE_URL, str(page_num))
-    params = {'q': keyword}
-    resp = requests.get(url, params=params)
-    soup_strainer = SoupStrainer('ul', class_='wallpapers')
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    params = {'search': keyword}
+    resp = requests.get(url, params=params, headers=headers)
+    logging.info(f'URL: {resp.url}')
+    soup_strainer = SoupStrainer('div', class_='item_img')
     soup = BeautifulSoup(resp.text, 'html.parser', parse_only=soup_strainer)
-    thumb_images = soup.find_all('img', class_='thumb_img')
+    thumb_images = soup.find_all('a')
     image_urls = []
     for thumb_image in thumb_images:
-        image_urls.append(thumb_image.parent['href'].strip(
-            '/').removesuffix('s.html'))
+        image_urls.append(thumb_image['href'].strip('/'))
     return image_urls
 
 
 def _download_wallpaper(image_url: str,
                         aspect_ratio: tuple[int, int] = (2560, 1440)):
     width, height = aspect_ratio
-    image_url += '-' + str(width) + 'x' + str(height) + '.jpg'
-    url = os.path.join(DOWNLOAD_URL, image_url)
-    return download_img(url)
+    resolution = str(width) + 'x' + str(height)
+    url = os.path.join(DOWNLOAD_URL, resolution, image_url.rsplit('/')[-1])
+    logging.info(url)
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    resp = requests.get(url, headers=headers)
+    soup_strainer = SoupStrainer('a', class_='btn btn-primary')
+    soup = BeautifulSoup(resp.text, 'html.parser', parse_only=soup_strainer)
+    image_url = soup.a['href']
+    logging.info(f'Image URL: {image_url}')
+    return download_img(image_url)
 
 
 def random_wallpaper(keyword):
@@ -63,17 +66,18 @@ def random_wallpaper(keyword):
     """
     # Find the number of pages in the search result
     tries = 0
-    max_tries = 10
+    max_tries = 1
     num_pages = _extract_num_of_search_pages(keyword)
     logging.info(f'Number of pages: {num_pages}')
     if num_pages > 0:
         while tries < max_tries:  # continue till a wallpaper with proper resolution is found
-            print('TRIES: ' + str(tries))
+            logging.info('TRIES: ' + str(tries))
             # Select a random page number
             random_page_num = random.randint(1, num_pages)
             logging.info(f'Random page number: {random_page_num}')
             # Extract all image urls from the page
             image_urls = _extract_image_urls(random_page_num, keyword)
+            logging.info(image_urls)
             # Select a random image url
             random_index = random.randint(0, len(image_urls)-1)
             random_image_url = image_urls[random_index]
