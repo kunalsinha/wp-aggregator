@@ -22,12 +22,12 @@ def download_img(url, dest=None, file_name=None):
     if not file_name:
         file_name = url.rsplit('/', maxsplit=1)[-1]
     file_path = os.path.join(dest, file_name)
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    r = requests.get(url, stream=True, headers=headers)
+    r = requests.get(url, stream=True)  # , headers=headers)
     # If url returns OK and is indeed an image then download it
+    logging.info(r.url)
     logging.info(r.status_code)
     logging.info(r.headers)
-    if r.status_code == 200 and r.headers['Content-Type'] == 'image/jpeg':
+    if r.status_code == 200:  # and r.headers['Content-Type'] == 'image/jpeg':
         logging.info('Downloading')
         with open(file_path, 'wb') as f:
             shutil.copyfileobj(r.raw, f)

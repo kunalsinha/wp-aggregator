@@ -8,21 +8,24 @@
 import argparse
 import subprocess
 import logging
-from source import wallpaperswide
+from source import WallpapersWide
+from source import WallpapersMug
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-k', '--keyword', help='search string')
+    parser.add_argument('-k', '--keyword', required=False,
+                        help='search string')
     parser.add_argument('-v', '--verbose', action='store_true')
     args = parser.parse_args()
     if args.verbose:
         logging.basicConfig(level=logging.INFO)
-    while True:
-        wp_path = wallpaperswide.random_wallpaper(args.keyword)
-        if wp_path:
-            subprocess.run(['feh', '--bg-scale', wp_path])
-            break
+    wallpaperswide = WallpapersWide()
+    wallpapersmug = WallpapersMug()
+    #wp_path = wallpaperswide.random_wallpaper(args.keyword)
+    wp_path = wallpapersmug.random_wallpaper(args.keyword)
+    if wp_path:
+        subprocess.run(['feh', '--bg-scale', wp_path])
 
 
 if __name__ == '__main__':
