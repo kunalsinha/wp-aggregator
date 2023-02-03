@@ -17,10 +17,10 @@ class WallpapersWide(WallpaperBase):
     def __init__(self):
         super().__init__()
 
-    def _extract_num_of_search_pages(self, keyword=None) -> int:
-        if not keyword:
-            keyword = ''
-        params = {'q': keyword}
+    def _extract_num_of_search_pages(self) -> int:
+        if not self.keyword:
+            self.keyword = ''
+        params = {'q': self.keyword}
         resp = requests.get(self.SEARCH_URL, params)
         if resp.status_code != 200:
             raise Exception(f'Response info: {resp.status_code}')
@@ -38,9 +38,9 @@ class WallpapersWide(WallpaperBase):
                 num_pages = 0
         return num_pages
 
-    def _extract_image_urls(self, page_num: int, keyword: str) -> list[str]:
+    def _extract_image_urls(self, page_num: int) -> list[str]:
         url = os.path.join(self.PAGE_URL, str(page_num))
-        params = {'q': keyword}
+        params = {'q': self.keyword}
         resp = requests.get(url, params=params)
         soup_strainer = SoupStrainer('ul', class_='wallpapers')
         soup = BeautifulSoup(resp.text, 'html.parser',
@@ -57,4 +57,5 @@ class WallpapersWide(WallpaperBase):
         width, height = aspect_ratio
         image_url += '-' + str(width) + 'x' + str(height) + '.jpg'
         url = os.path.join(self.DOWNLOAD_URL, image_url)
+        logging.info(f'Final url: {url}')
         return download_img(url)

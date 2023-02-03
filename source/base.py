@@ -9,11 +9,11 @@ class WallpaperBase(ABC):
         pass
 
     @abstractmethod
-    def _extract_num_of_search_pages(self, keyword: str) -> int:
+    def _extract_num_of_search_pages(self) -> int:
         pass
 
     @abstractmethod
-    def _extract_image_urls(self, page_num: int, keyword: str) -> list[str]:
+    def _extract_image_urls(self, page_num: int) -> list[str]:
         pass
 
     @abstractmethod
@@ -28,9 +28,10 @@ class WallpaperBase(ABC):
             keyword: search term (pass None to get any random image).
         """
         # Find the number of pages in the search result
+        self.keyword = keyword
         tries = 0
         max_tries = 10
-        num_pages = self._extract_num_of_search_pages(keyword)
+        num_pages = self._extract_num_of_search_pages()
         logging.info(f'Number of pages: {num_pages}')
         if num_pages > 0:
             while tries < max_tries:  # continue till a wallpaper with proper resolution is found
@@ -39,7 +40,7 @@ class WallpaperBase(ABC):
                 random_page_num = random.randint(1, num_pages)
                 logging.info(f'Random page number: {random_page_num}')
                 # Extract all image urls from the page
-                image_urls = self._extract_image_urls(random_page_num, keyword)
+                image_urls = self._extract_image_urls(random_page_num)
                 logging.info(image_urls)
                 # Select a random image url
                 random_index = random.randint(0, len(image_urls)-1)

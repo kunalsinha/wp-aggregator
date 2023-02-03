@@ -10,6 +10,7 @@ import subprocess
 import logging
 from source import WallpapersWide
 from source import WallpapersMug
+from source import HDQWalls
 
 
 def main():
@@ -22,8 +23,10 @@ def main():
         logging.basicConfig(level=logging.INFO)
     wallpaperswide = WallpapersWide()
     wallpapersmug = WallpapersMug()
+    hdqwalls = HDQWalls()
     #wp_path = wallpaperswide.random_wallpaper(args.keyword)
-    wp_path = wallpapersmug.random_wallpaper(args.keyword)
+    #wp_path = wallpapersmug.random_wallpaper(args.keyword)
+    wp_path = hdqwalls.random_wallpaper(args.keyword)
     if wp_path:
         subprocess.run(['feh', '--bg-scale', wp_path])
 

@@ -17,10 +17,10 @@ class WallpapersMug(WallpaperBase):
     def __init__(self):
         super().__init__()
 
-    def _extract_num_of_search_pages(self, keyword):
-        if not keyword:
-            keyword = ''
-        params = {'search': keyword}
+    def _extract_num_of_search_pages(self):
+        if not self.keyword:
+            self.keyword = ''
+        params = {'search': self.keyword}
         headers = {'User-Agent': 'Mozilla/5.0'}
         resp = requests.get(self.SEARCH_URL, params=params, headers=headers)
         if resp.status_code != 200:
@@ -33,10 +33,10 @@ class WallpapersMug(WallpaperBase):
         except Exception:
             return 0
 
-    def _extract_image_urls(self, page_num: int, keyword: str) -> list[str]:
+    def _extract_image_urls(self, page_num: int) -> list[str]:
         url = os.path.join(self.PAGE_URL, str(page_num))
         headers = {'User-Agent': 'Mozilla/5.0'}
-        params = {'search': keyword}
+        params = {'search': self.keyword}
         resp = requests.get(url, params=params, headers=headers)
         logging.info(f'URL: {resp.url}')
         soup_strainer = SoupStrainer('div', class_='item_img')
@@ -61,4 +61,5 @@ class WallpapersMug(WallpaperBase):
         soup = BeautifulSoup(resp.text, 'html.parser',
                              parse_only=soup_strainer)
         image_url = soup.a['href']
+        logging.info(f'Final url: {image_url}')
         return download_img(image_url)
